@@ -3,47 +3,49 @@
 % 
 % Author        : Oliver Salmeron
 %
-% Description   : Matlab script for processing IMU [and GPS] data. 
+% Version       : 1.1.1
+%
+% Description   : Matlab script for processing IMU [and GPS] data to simulate the flight motion and path. 
 % 
-% This program will open a text file containing flight data to rotate a 3D
-% object. The result is saved as a movie named 'flightSimulation.avi'.
+% This program will open a text file containing flight data (roll,pitch,yaw,lat,lon,alt) to rotate a 3D
+% object. The result is saved as a movie named 'flightSimulation.mp4'.
 % This will help to visualize the motion tracking of a payload during the course of a flight.
 %
 % To look up a MATLAB command, highlight command and press F1.
 %
 % Steps Outline :
-%   1. Generate Plot
+%   1. Generate Grid.
 %   2. Generate Cylinder and Frame vectors.
 %   3. Plot the Cylinder and Frame vectors.
 %   4. Create a Group Object and Parent Surface.
 %   5. Import 'flightData.txt' text file for reading.
 %   6. Open/Close text file to read and exctract data.
 %   7. Parse imported data into temporary variables.
-%   8. Create Video File to write to
-%   9. Create a set of frames and write each frame to Video File
+%   8. Create Video File to write to.
+%   9. Create a set of frames and write each frame to Video File.
 %
 % To do : Update script to integrate GPS data
 %         Integrate MATLAB with Arduino for faster and easier testing
 %           -Add ArduinoIO package to MATLAB
-%         Update script to a function instead of script
-%         Update to read a csv file (instead of import text file)
+%         Update script to a function
+%         Update to read a csv file (instead of import text file)?
 %-------------------------------------------------------------------------
 
-%% 1. Generate Plot
+%% 1. Generate Grid
 
 clf
 myaxes = axes('xlim',[-1.5 1.5],'ylim',[-1.5 1.5],'zlim',[-1.5 1.5]);
 view(3)
 grid on
-%axis equal
 hold on
 xlabel('x')
 ylabel('y')
 zlabel('z')
 
 % Additional Grid options
-%axis square        % Adjusts plot axes 
-%axis off
+%axis square        % Adjusts plot axes to square
+%axis equal         % Adjusts plot axes to equal
+%axis off           % Removes axes grid
 
 %% 2. Generate the Cylinder and frame vectors.
 
@@ -97,8 +99,8 @@ drawnow
 
 %% 5. Import 'flightData' text file for reading. 
 
-% Use Import from the home tab to visually select data to extract from a
-% file.
+% Use the Import tool from the home tab to visually select data to extract from a
+% file and generate script.
 
 %Initialize variables.
 
@@ -131,12 +133,13 @@ dataArray = textscan(fileID, formatSpec, 'Delimiter', delimiter, 'EmptyValue' ,N
     
 % Close the text file.
 fclose(fileID);
+   
+    % To include COM port for serial interface, use the command line below.
+    % This would help for live testing of code. If used, comment out the
+    % File Import section.
     
-% Post processing for unimportable data.
-% No unimportable data rules were applied during the import, so no post
-% processing code is included. To generate code which works for
-% unimportable data, select unimportable cells in a file and regenerate the
-% script.
+    %a= arduino('com3');        % Select COM port
+
 
 %%  7. Parse imported data into temporary variables.
 
@@ -153,18 +156,13 @@ alt = dataArray{:, 7};
 clearvars filename delimiter startRow formatSpec fileID dataArray ans;
     
 %% 8. Create Video File to write to.
-v = VideoWriter('flightSimulation.mp4', '')
+v = VideoWriter('flightSimulation.mp4','MPEG-4')         % Create an mp4 file type and display properties
 open(v);
 %axis tight manual
 set(gca,'nextplot','replacechildren');
 
 %% 9. Create a set of frames and write each frame to Video File.
     radians_degree = pi/180;    % Conversion factor from Degrees to Radians.
-
-    % Include COM port for serial interface
-    % This would help for live testing of code. If used, comment out the
-    % File Import section.
-    %a= arduino('com3');        % Select COM port
 
 for Time = 1:7800     % Update limit of while loop to Max Time
     % Read Euler angles (roll,pitch,yaw-->r,p,y).
@@ -189,3 +187,5 @@ for Time = 1:7800     % Update limit of while loop to Max Time
     
     Time=Time+1;            % Increment the for loop
 end
+
+close(v);

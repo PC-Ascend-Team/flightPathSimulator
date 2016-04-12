@@ -3,10 +3,12 @@
 % 
 % Author        : Oliver Salmeron
 %
-% Description   : Matlab script for processing IMU [and GPS] data. 
+% Version       : 1.1.1
+%
+% Description   : Matlab script for processing IMU [and GPS] data to simulate the flight motion and path. 
 % 
-% This program will open a text file containing flight data to rotate a 3D
-% object. The result is saved as a movie named 'flightSimulation.avi'.
+% This program will open a text file containing flight data (roll,pitch,yaw,lat,lon,alt) to rotate a 3D
+% object. The result is saved as a movie named 'flightSimulation.mp4'.
 % This will help to visualize the motion tracking of a payload during the course of a flight.
 %
 % To look up a MATLAB command, highlight command and press F1.
@@ -25,8 +27,8 @@
 % To do : Update script to integrate GPS data
 %         Integrate MATLAB with Arduino for faster and easier testing
 %           -Add ArduinoIO package to MATLAB
-%         Update script to a function instead of script
-%         Update to read a csv file (instead of import text file)
+%         Update script to a function
+%         Update to read a csv file (instead of import text file)?
 %-------------------------------------------------------------------------
 
 %% 1. Generate Grid
