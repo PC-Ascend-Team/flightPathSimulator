@@ -3,7 +3,7 @@
 % 
 % Author        : Oliver Salmeron
 %
-% Version       : 1.1.1
+% Version       : 1.2
 %
 % Description   : Matlab script for processing IMU [and GPS] data to simulate the flight motion and path. 
 % 
@@ -24,11 +24,19 @@
 %   8. Create Video File to write to.
 %   9. Create a set of frames and write each frame to Video File.
 %
+%   Useful MATLAB Commands:
+%       colormap
+%       
+%
+%
+%
 % To do : Update script to integrate GPS data
 %         Integrate MATLAB with Arduino for faster and easier testing
 %           -Add ArduinoIO package to MATLAB
 %         Update script to a function
 %         Update to read a csv file (instead of import text file)?
+%
+%         Color maps: colormap(gray), colormap hsv, colormap copper
 %-------------------------------------------------------------------------
 
 %% 1. Generate Grid
@@ -50,35 +58,53 @@ zlabel('z')
 %% 2. Generate the Cylinder and frame vectors.
 
 % draw the three coloured frame lines
-Lx = line([0 1],[0,0],[0,0],'color',[1,0,0]);
-Ly = line([0 0],[0,1],[0,0],'color',[0,1,0]);
-Lz = line([0 0],[0,0],[0,1],'color',[0,0,1]);
+Lx = line([0 1.25],[0,0],[0,0],'color',[1,0,0]);
+Ly = line([0 0],[0,1.25],[0,0],'color',[0,1,0]);
+Lz = line([0 0],[0,0],[0,1.25],'color',[0,0,1]);
 	
 set([Lx,Ly,Lz],'linewidth',3)
     
-% text for x,y and z for each frame line
+% add text for x,y and z for each frame line
 tX = text('position',[.7 0 .1],'string','x','fontw','b');
 tY = text('position',[ 0 .7 .1],'string','y','fontw','b');
 tZ = text('position',[.05 0.05 .7],'string','z','fontw','b');
 	
 % draw the three base frame axis lines for reference
-line([0 1.5],[0,0],[0,0],'color',[0,0,0],'linewidth',2);
-line([0 0],[0,1.5],[0,0],'color',[0,0,0],'linewidth',2);
-line([0 0],[0,0],[0,1.5],'color',[0,0,0],'linewidth',2);
+line([0 1.5],[0,0],[0,0],'color',[0,0,0],'linewidth',1);
+line([0 0],[0,1.5],[0,0],'color',[0,0,0],'linewidth',1);
+line([0 0],[0,0],[0,1.5],'color',[0,0,0],'linewidth',1);
 	
-% text for x0,y0 and z0 for each base frame line
+% add text for x0,y0 and z0 for each base frame line
 text('position',[1.3 0 .1],'string','x_0','fontw','b');
 text('position',[ 0 1.3 .1],'string','y_0','fontw','b');
 text('position',[.05 0.05 1.3],'string','z_0','fontw','b');
-	
+
+% add text to display altitude
+
 % create Cylinder
 [X,Y,Z] = cylinder([0.75 0.75]);	
 
-%% 3. Plot the Cylinder
+% create Sphere
+[S1,S2,S3] = sphere;
+
+    
+%% 3. Plot the shapes/Create the object
+% Plot the cylinder (Body)
 	
 h(1) = surf(X.*0.5,Y.*0.5,Z.*0.5);
 h(2) = surf(-X.*0.5,-Y.*0.5,-Z.*0.5);
-   
+
+% Plot the Sphere (Bottom)
+h(9)  = surf(S1.*0.375,S2.*0.375,S3.*0.375-0.5);
+
+% Plot the Circle (Lid)
+h(10) = surf(S1.*0.375,S2.*0.375,S3.*0+0.5);
+h(11) = mesh(S1.*0.1,S2.*0.1,S3.*0.05+0.5);
+
+%Set the colormap (lots to look up)
+colormap(gray)
+
+% Plot the Base and Frame Vectors
 h(3) = Lx;
 h(4) = Ly;
 h(5) = Lz;
@@ -163,8 +189,16 @@ set(gca,'nextplot','replacechildren');
 
 %% 9. Create a set of frames and write each frame to Video File.
     radians_degree = pi/180;    % Conversion factor from Degrees to Radians.
+    feet_meter = 3.28084;        % Conversion factor from Meters to Feet (1m=3.28ft)
+    
+for Time = 7550:7708     % Update limit of while loop to Max Time
+    % Read GPS values (lat,lon,alt-->lat,lon,a).
+    %lat = lat(Time);
+    %lon = lon(Time);
 
-for Time = 1:7800     % Update limit of while loop to Max Time
+
+    
+    
     % Read Euler angles (roll,pitch,yaw-->r,p,y).
     r = roll(Time);         % r <-- roll reading
     p = pitch(Time);        % p <-- pitch reading
@@ -175,16 +209,24 @@ for Time = 1:7800     % Update limit of while loop to Max Time
     Y = p*radians_degree;   % Y <-- p
     Z = y*radians_degree;   % Z <-- y
    
-    % Rotate object.
+    % Rotate object in steps.
     Rot = makehgtform('xrotate',X,'yrotate',Y,'zrotate',Z);
     set(combinedobject,'Matrix',Rot)
+    
+    % Convert alt to feet and plot as title
+    %a = alt(Time);
+    %alt = a*feet_meter;
+    %plot3(0,0,1,text(0,0,1,['alt: ',int2str(alt)]));
+    
     drawnow;
-    pause(0.0001);        % Set the plot rate
+    %pause(0.0001);        % Set the plot rate
+    
+
     
     axis([-1 1 -1 1 -1 1])  % Set the axis for each frame of the loop for recording a movie
     frame = getframe;       
-    writeVideo(v,frame);    % Record Movie of the frames
-    
+    writeVideo(v,frame);    % Record Movie of the frames   
+   
     Time=Time+1;            % Increment the for loop
 end
 
